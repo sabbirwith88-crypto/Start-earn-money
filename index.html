@@ -1,0 +1,2977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Start Earn Money - Telegram Mini App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Import Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-analytics-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #000;
+            color: #fff;
+            min-height: 100vh;
+            padding-bottom: 100px;
+        }
+        
+        /* Loading Screen Styles */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+        
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .loading-logo {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #34aadc, #0088cc);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        
+        .loading-text {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #fff;
+            text-align: center;
+        }
+        
+        .loading-progress-container {
+            width: 80%;
+            max-width: 300px;
+            height: 12px;
+            background: #333;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .loading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #34aadc, #0088cc);
+            border-radius: 6px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .loading-percentage {
+            font-size: 1rem;
+            color: #34aadc;
+            font-weight: bold;
+        }
+        
+        .loading-dots {
+            display: flex;
+            margin-top: 20px;
+        }
+        
+        .loading-dot {
+            width: 8px;
+            height: 8px;
+            background: #34aadc;
+            border-radius: 50%;
+            margin: 0 5px;
+            animation: loadingDot 1.5s infinite ease-in-out;
+        }
+        
+        .loading-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .loading-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes loadingDot {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.5);
+                opacity: 0.7;
+            }
+        }
+        
+        .container {
+            max-width: 100%;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        .container.loaded {
+            opacity: 1;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+            position: relative;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        
+        .subtitle {
+            font-size: 1rem;
+            opacity: 0.7;
+        }
+        
+        .settings-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s;
+        }
+        
+        .settings-btn:hover {
+            background-color: #222;
+        }
+        
+        .content {
+            background: #111;
+            border-radius: 5px;
+            padding: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #222;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            color: #fff;
+        }
+        
+        .section-title i {
+            margin-right: 10px;
+            color: #34aadc;
+        }
+        
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .card {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #333;
+            transition: transform 0.2s, background-color 0.2s;
+            cursor: pointer;
+        }
+        
+        .card:active {
+            transform: scale(0.98);
+            background-color: #222;
+        }
+        
+        .card i {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            color: #34aadc;
+        }
+        
+        .card h3 {
+            font-size: 1rem;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+        
+        .card p {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            color: #ccc;
+        }
+        
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #111;
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 0;
+            border-top: 1px solid #333;
+            z-index: 100;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #888;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            flex: 1;
+            padding: 5px 0;
+        }
+        
+        .nav-item.active {
+            color: #34aadc;
+        }
+        
+        .nav-item i {
+            font-size: 1.3rem;
+            margin-bottom: 5px;
+        }
+        
+        .nav-item span {
+            font-size: 0.7rem;
+        }
+        
+        .section {
+            display: none;
+        }
+        
+        .section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #34aadc;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #34aadc;
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .notification.show {
+            opacity: 1;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            opacity: 0.7;
+        }
+        
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #555;
+        }
+        
+        .empty-text {
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+        
+        .empty-subtext {
+            font-size: 0.9rem;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: #111;
+            border-radius: 15px;
+            padding: 25px;
+            width: 90%;
+            max-width: 400px;
+            border: 1px solid #333;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #fff;
+            text-align: center;
+        }
+        
+        .modal-text {
+            margin-bottom: 20px;
+            text-align: center;
+            opacity: 0.8;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .modal-btn.cancel {
+            background: #333;
+            color: #fff;
+        }
+        
+        .modal-btn.delete {
+            background: #e74c3c;
+            color: #fff;
+        }
+        
+        .modal-btn:active {
+            opacity: 0.8;
+        }
+        
+        .setting-option {
+            padding: 15px;
+            background: #1a1a1a;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .setting-label {
+            font-weight: bold;
+        }
+        
+        .setting-description {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+        
+        .delete-btn {
+            background: #e74c3c;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        /* Switch styling */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #333;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #34aadc;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        .invite-link-container {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #333;
+            text-align: center;
+        }
+        
+        .invite-link {
+            background: #333;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: monospace;
+            word-break: break-all;
+            border: 1px solid #444;
+        }
+        
+        .copy-btn {
+            background: #34aadc;
+            color: #000;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px 5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .share-btn {
+            background: #4cd964;
+            color: #000;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px 5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .withdraw-btn {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 20px auto;
+            display: block;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .withdraw-btn:active {
+            transform: scale(0.98);
+            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+        }
+        
+        .referral-stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+        
+        .referral-stat {
+            text-align: center;
+        }
+        
+        .referral-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #34aadc;
+        }
+        
+        .referral-label {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+        
+        .task-completed-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #4cd964;
+        }
+
+        .task-completed-message i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .golden-text {
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        
+        .withdraw-info {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #333;
+            text-align: center;
+        }
+        
+        .withdraw-info h3 {
+            margin-bottom: 15px;
+            color: #ffd700;
+        }
+        
+        .withdraw-info p {
+            margin-bottom: 10px;
+            opacity: 0.8;
+        }
+        
+        .withdraw-modal .modal-content {
+            max-width: 350px;
+        }
+        
+        .withdraw-input {
+            width: 100%;
+            padding: 15px;
+            background: #222;
+            border: 1px solid #333;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1.2rem;
+            text-align: center;
+            margin: 15px 0;
+        }
+        
+        .withdraw-input:focus {
+            outline: none;
+            border-color: #34aadc;
+        }
+        
+        .withdraw-amounts {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+        }
+        
+        .amount-option {
+            background: #222;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 10px;
+            flex: 1;
+            margin: 0 5px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .amount-option.active {
+            background: #34aadc;
+            color: #000;
+            border-color: #34aadc;
+        }
+        
+        .withdraw-method {
+            background: #222;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .withdraw-method.active {
+            border-color: #34aadc;
+            background: rgba(52, 170, 220, 0.1);
+        }
+        
+        .withdraw-method i {
+            font-size: 1.5rem;
+            margin-right: 15px;
+            color: #34aadc;
+        }
+        
+        .withdraw-method-info {
+            flex: 1;
+        }
+        
+        .withdraw-method-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .withdraw-method-desc {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+        
+        /* Task Styles */
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #1a1a1a;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #333;
+            transition: all 0.3s ease;
+        }
+        
+        .task-item.completed {
+            opacity: 0.6;
+            transform: scale(0.95);
+        }
+        
+        .task-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: #000;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            overflow: hidden;
+            border: 2px solid #333;
+            position: relative;
+        }
+        
+        .task-info {
+            flex: 1;
+        }
+        
+        .task-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+        
+        .task-points {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            color: #ccc;
+        }
+        
+        .task-action {
+            background: #34aadc;
+            color: #000;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .task-action:active {
+            background-color: #2a8bb8;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #34aadc;
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .payment-input {
+            width: 100%;
+            padding: 15px;
+            background: #222;
+            border: 1px solid #333;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1rem;
+            margin: 10px 0;
+        }
+        
+        .payment-input:focus {
+            outline: none;
+            border-color: #34aadc;
+        }
+        
+        .payment-label {
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            display: block;
+        }
+        
+        .withdraw-conditions {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+            border: 1px solid #333;
+        }
+        
+        .condition-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .condition-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .condition-check {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #333;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 0.8rem;
+        }
+        
+        .condition-check.fulfilled {
+            background: #4cd964;
+        }
+        
+        .condition-text {
+            flex: 1;
+            font-size: 0.9rem;
+        }
+        
+        .submit-withdraw-btn {
+            background: #4cd964;
+            color: #000;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+            transition: background-color 0.2s;
+        }
+        
+        .submit-withdraw-btn:disabled {
+            background: #333;
+            color: #888;
+            cursor: not-allowed;
+        }
+        
+        .submit-withdraw-btn:active:not(:disabled) {
+            background-color: #3bc453;
+        }
+        
+        /* Help Center Styles */
+        .help-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .help-card {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #333;
+            transition: transform 0.2s, background-color 0.2s;
+            cursor: pointer;
+        }
+        
+        .help-card:active {
+            transform: scale(0.98);
+            background-color: #222;
+        }
+        
+        .help-card i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #34aadc;
+        }
+        
+        .help-card h3 {
+            font-size: 1rem;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+        
+        .help-card p {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            color: #ccc;
+        }
+        
+        .faq-item {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 1px solid #333;
+        }
+        
+        .faq-question {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .faq-answer {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            display: none;
+        }
+        
+        .faq-item.active .faq-answer {
+            display: block;
+        }
+        
+        .contact-link {
+            color: #34aadc;
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: rgba(52, 170, 220, 0.1);
+            border-radius: 10px;
+            border: 1px solid #34aadc;
+            transition: all 0.3s ease;
+            margin: 10px 0;
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .contact-link:hover {
+            background: rgba(52, 170, 220, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .contact-support-container {
+            text-align: center;
+            padding: 20px 15px;
+        }
+        
+        .contact-support-container p {
+            margin-bottom: 15px;
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+        
+        /* Daily Reward Styles */
+        .daily-reward-container {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #333;
+            text-align: center;
+        }
+        
+        .daily-reward-timer {
+            font-size: 1.2rem;
+            margin: 15px 0;
+            color: #ffd700;
+            font-weight: bold;
+        }
+        
+        .reward-available {
+            color: #4cd964;
+        }
+        
+        .reward-cooldown {
+            color: #ff6b6b;
+        }
+        
+        .daily-reward-btn {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #000;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .daily-reward-btn:disabled {
+            background: #333;
+            color: #888;
+            cursor: not-allowed;
+        }
+        
+        .daily-reward-btn:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+        
+        /* Withdraw Section Styles */
+        .withdraw-details-container {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #333;
+        }
+        
+        .withdraw-detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #333;
+        }
+        
+        .withdraw-detail-item:last-child {
+            border-bottom: none;
+        }
+        
+        .withdraw-detail-label {
+            font-weight: bold;
+            color: #fff;
+        }
+        
+        .withdraw-detail-value {
+            color: #34aadc;
+            font-weight: bold;
+        }
+        
+        .withdraw-history {
+            margin-top: 30px;
+        }
+        
+        .withdraw-history-item {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 1px solid #333;
+        }
+        
+        .withdraw-history-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .withdraw-history-amount {
+            font-weight: bold;
+            color: #ffd700;
+        }
+        
+        .withdraw-history-date {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+        
+        .withdraw-history-status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .status-pending {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+        
+        .status-completed {
+            background: rgba(76, 217, 100, 0.2);
+            color: #4cd964;
+        }
+        
+        .status-failed {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+        }
+        
+        .home-actions {
+            margin-top: 20px;
+        }
+        
+        .home-section-title {
+            font-size: 1.2rem;
+            margin: 20px 0 10px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+        }
+        
+        .home-section-title i {
+            margin-right: 10px;
+            color: #34aadc;
+        }
+        
+        /* Ad Task Modal Styles */
+        .ad-task-modal .modal-content {
+            max-width: 350px;
+        }
+        
+        .ad-warning {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .ad-warning h4 {
+            color: #ffc107;
+            margin-bottom: 10px;
+        }
+        
+        .ad-timer {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ffc107;
+            margin: 15px 0;
+        }
+        
+        .ad-link-btn {
+            background: #4cd964;
+            color: #000;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .ad-link-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .ad-complete-btn {
+            background: #34aadc;
+            color: #000;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .ad-complete-btn:disabled {
+            background: #333;
+            color: #888;
+            cursor: not-allowed;
+        }
+        
+        .ad-complete-btn:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-logo">S.E.M</div>
+        <div class="loading-text">Start Earn Money</div>
+        <div class="loading-progress-container">
+            <div class="loading-progress-bar" id="loadingProgressBar"></div>
+        </div>
+        <div class="loading-percentage" id="loadingPercentage">0%</div>
+        <div class="loading-dots">
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification"></div>
+    
+    <!-- Delete Account Modal -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <h3 class="modal-title">Delete Account</h3>
+            <p class="modal-text">Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently lost.</p>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" id="cancelDelete">Cancel</button>
+                <button class="modal-btn delete" id="confirmDelete">Delete</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Withdraw Modal -->
+    <div class="modal withdraw-modal" id="withdrawModal">
+        <div class="modal-content">
+            <h3 class="modal-title">Withdraw Funds</h3>
+            <p class="modal-text">Enter the amount you want to withdraw</p>
+            
+            <input type="number" class="withdraw-input" id="withdrawAmount" placeholder="0" min="0">
+            
+            <div class="withdraw-amounts">
+                <div class="amount-option" data-amount="5">5</div>
+                <div class="amount-option" data-amount="10">10</div>
+                <div class="amount-option" data-amount="20">20</div>
+                <div class="amount-option" data-amount="50">50</div>
+            </div>
+            
+            <div class="withdraw-conditions">
+                <h4 style="margin-bottom: 10px;">Withdrawal Conditions</h4>
+                <div class="condition-item">
+                    <div class="condition-check" id="minFriendsCheck">!</div>
+                    <div class="condition-text">Minimum 3 friends invited</div>
+                </div>
+                <div class="condition-item">
+                    <div class="condition-check" id="tasksCompletedCheck">!</div>
+                    <div class="condition-text">All tasks completed</div>
+                </div>
+                <div class="condition-item">
+                    <div class="condition-check" id="minAmountCheck">!</div>
+                    <div class="condition-text">Minimum withdrawal amount: <span id="minWithdrawAmount">5</span> <span id="withdrawCurrency">USD</span></div>
+                </div>
+                <div class="condition-item">
+                    <div class="condition-check" id="withdrawScheduleCheck">!</div>
+                    <div class="condition-text">Withdrawal available: 3rd-11th of each month</div>
+                </div>
+            </div>
+            
+            <!-- Binance Only Withdraw Method -->
+            <div class="withdraw-methods-container" id="withdrawMethodsContainer">
+                <div class="withdraw-method active" data-method="binance">
+                    <i class="fab fa-bitcoin"></i>
+                    <div class="withdraw-method-info">
+                        <div class="withdraw-method-name">Binance</div>
+                        <div class="withdraw-method-desc">Withdraw to your Binance account</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="paymentInputContainer">
+                <label class="payment-label" id="paymentLabel">Enter your Binance ID</label>
+                <input type="text" class="payment-input" id="paymentInput" placeholder="Binance User ID">
+            </div>
+            
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" id="cancelWithdraw">Cancel</button>
+                <button class="submit-withdraw-btn" id="submitWithdraw" disabled>Submit Withdrawal</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ad Task Modal -->
+    <div class="modal ad-task-modal" id="adTaskModal">
+        <div class="modal-content">
+            <h3 class="modal-title" id="adTaskTitle">Ad Task</h3>
+            
+            <div class="ad-warning">
+                <h4>Important Notice</h4>
+                <p>You must stay on the ad page for at least 3 seconds to complete this task. If you leave too early, the task will not be completed and you won't receive payment.</p>
+            </div>
+            
+            <div class="ad-timer" id="adTimer">3</div>
+            
+            <p class="modal-text" id="adTaskDescription">Click the button below to open the ad link</p>
+            
+            <button class="ad-link-btn" id="openAdLinkBtn">
+                <i class="fas fa-external-link-alt"></i> Open Ad Link
+            </button>
+            
+            <button class="ad-complete-btn" id="completeAdTaskBtn" disabled>
+                <i class="fas fa-check-circle"></i> Complete Task
+            </button>
+            
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" id="cancelAdTask">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container" id="appContainer">
+        <header>
+            <h1>Start Earn Money</h1>
+            <p class="subtitle">Start from zero and build your rewards</p>
+            <button class="settings-btn" id="settingsBtn">
+                <i class="fas fa-cog"></i>
+            </button>
+        </header>
+        
+        <!-- Home Section -->
+        <section id="home" class="section active">
+            <div class="content">
+                <h2 class="section-title"><i class="fas fa-home"></i> Home</h2>
+                <p>Welcome! Start completing tasks to earn your first points.</p>
+                
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="points-value">0</div>
+                        <div class="stat-label" id="currency-label">USD</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="friends-value">0</div>
+                        <div class="stat-label">Friends</div>
+                    </div>
+                </div>
+                
+                <button class="withdraw-btn" id="withdrawBtn">
+                    <i class="fas fa-wallet"></i> Withdraw Funds
+                </button>
+                
+                <!-- Daily Reward Section -->
+                <div class="daily-reward-container">
+                    <h3><i class="fas fa-gift"></i> Daily Reward</h3>
+                    <p>Claim your daily reward every 24 hours</p>
+                    <div class="daily-reward-timer" id="dailyRewardTimer">Available now!</div>
+                    <button class="daily-reward-btn" id="dailyRewardBtn">
+                        <i class="fas fa-gift"></i> Claim Daily Reward
+                    </button>
+                </div>
+                
+                <div class="home-actions">
+                    <h3 class="home-section-title"><i class="fas fa-bolt"></i> Quick Actions</h3>
+                    <div class="card-grid">
+                        <div class="card" data-action="invite-friends">
+                            <i class="fas fa-share-alt"></i>
+                            <h3>Invite Friends</h3>
+                            <p>Get bonus</p>
+                        </div>
+                        <div class="card" data-action="tasks">
+                            <i class="fas fa-tasks"></i>
+                            <h3>Tasks</h3>
+                            <p>Earn money</p>
+                        </div>
+                        <div class="card" data-action="help">
+                            <i class="fas fa-question-circle"></i>
+                            <h3>Help Center</h3>
+                            <p>Get support</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Earn Section -->
+        <section id="earn" class="section">
+            <div class="content">
+                <h2 class="section-title"><i class="fas fa-coins"></i> Earn Money</h2>
+                <p>Complete tasks to earn money</p>
+                
+                <div id="tasks-container">
+                    <!-- Tasks will be loaded here -->
+                </div>
+
+                <div id="all-tasks-completed" class="task-completed-message hidden">
+                    <i class="fas fa-check-circle"></i>
+                    <div class="empty-text">All tasks completed!</div>
+                    <div class="empty-subtext">You've completed all available tasks. Check back later for new tasks.</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Withdraw Section -->
+        <section id="withdraw" class="section">
+            <div class="content">
+                <h2 class="section-title"><i class="fas fa-wallet"></i> Withdraw</h2>
+                <p>Withdraw your earnings to Binance</p>
+                
+                <div class="withdraw-details-container">
+                    <h3 style="margin-bottom: 15px; color: #ffd700;">Withdrawal Details</h3>
+                    
+                    <div class="withdraw-detail-item">
+                        <span class="withdraw-detail-label">Current Balance:</span>
+                        <span class="withdraw-detail-value" id="withdraw-balance">$0.00</span>
+                    </div>
+                    
+                    <div class="withdraw-detail-item">
+                        <span class="withdraw-detail-label">Minimum Withdrawal:</span>
+                        <span class="withdraw-detail-value">$5.00</span>
+                    </div>
+                    
+                    <div class="withdraw-detail-item">
+                        <span class="withdraw-detail-label">Friends Required:</span>
+                        <span class="withdraw-detail-value">3</span>
+                    </div>
+                    
+                    <div class="withdraw-detail-item">
+                        <span class="withdraw-detail-label">Withdrawal Period:</span>
+                        <span class="withdraw-detail-value">3rd - 11th of each month</span>
+                    </div>
+                    
+                    <div class="withdraw-detail-item">
+                        <span class="withdraw-detail-label">Payment Method:</span>
+                        <span class="withdraw-detail-value">Binance Only</span>
+                    </div>
+                    
+                    <div class="withdraw-detail-item">
+                        <span class="withdraw-detail-label">Processing Time:</span>
+                        <span class="withdraw-detail-value">3-7 business days</span>
+                    </div>
+                </div>
+                
+                <button class="withdraw-btn" id="withdrawBtn2">
+                    <i class="fas fa-wallet"></i> Request Withdrawal
+                </button>
+                
+                <div class="withdraw-history">
+                    <h3 class="home-section-title"><i class="fas fa-history"></i> Withdrawal History</h3>
+                    
+                    <div id="withdraw-history-container">
+                        <div class="empty-state">
+                            <div class="empty-icon">
+                                <i class="fas fa-wallet"></i>
+                            </div>
+                            <div class="empty-text">No withdrawal history</div>
+                            <div class="empty-subtext">Your withdrawal history will appear here</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Help Center Section -->
+        <section id="help" class="section">
+            <div class="content">
+                <h2 class="section-title"><i class="fas fa-question-circle"></i> Help Center</h2>
+                <p>Get help and support for any issues</p>
+                
+                <div class="help-options">
+                    <div class="help-card" data-help="faq">
+                        <i class="fas fa-list-alt"></i>
+                        <h3>FAQ</h3>
+                        <p>Frequently asked questions</p>
+                    </div>
+                    
+                    <div class="help-card" data-help="contact">
+                        <i class="fas fa-headset"></i>
+                        <h3>Contact Support</h3>
+                        <p>Get in touch with us</p>
+                    </div>
+                    
+                    <div class="help-card" data-help="tutorial">
+                        <i class="fas fa-play-circle"></i>
+                        <h3>Tutorials</h3>
+                        <p>Learn how to use the app</p>
+                    </div>
+                    
+                    <div class="help-card" data-help="terms">
+                        <i class="fas fa-file-alt"></i>
+                        <h3>Terms & Conditions</h3>
+                        <p>Read our policies</p>
+                    </div>
+                </div>
+                
+                <!-- FAQ Section -->
+                <div id="faq-section" class="hidden">
+                    <h3 class="home-section-title" style="margin-top: 30px;"><i class="fas fa-question"></i> Frequently Asked Questions</h3>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            How do I earn money?
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            You can earn money by completing tasks, inviting friends, and claiming daily rewards. Each completed task gives you a reward in USD.
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            How do I withdraw my earnings?
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            To withdraw, you need to invite at least 3 friends, complete all tasks, have a minimum balance of 5 USD, and it must be between the 3rd and 11th of the month. Then you can withdraw via Binance.
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            How much can I earn per referral?
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            You earn 0.1 USD for each friend who joins using your referral link. When you invite 3 friends, you get an additional 0.3 USD bonus.
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            How much is the daily reward?
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            You can claim 0.05 USD as a daily reward every 24 hours. Make sure to check back daily to maximize your earnings!
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            What payment method is available for withdrawal?
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            Currently, we only support Binance for withdrawals. You need to provide your Binance ID when requesting a withdrawal.
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            When can I withdraw my earnings?
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            Withdrawals are only available from the 3rd to the 11th of each month. Outside of this period, withdrawals are temporarily disabled.
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Contact Section -->
+                <div id="contact-section" class="hidden">
+                    <h3 class="home-section-title" style="margin-top: 30px;"><i class="fas fa-envelope"></i> Contact Support</h3>
+                    <div class="contact-support-container">
+                        <p>Click the button below to contact our support team directly on Telegram:</p>
+                        <a href="https://t.me/startearnmoneyofficialsenter" class="contact-link" target="_blank">
+                            <i class="fab fa-telegram"></i> @startearnmoneyofficialsenter
+                        </a>
+                        <p>Our support team will assist you with any issues or questions you may have.</p>
+                    </div>
+                </div>
+                
+                <!-- Tutorial Section -->
+                <div id="tutorial-section" class="hidden">
+                    <h3 class="home-section-title" style="margin-top: 30px;"><i class="fas fa-play-circle"></i> App Tutorial</h3>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            Getting Started
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <ol>
+                                <li>Complete your first task to earn rewards</li>
+                                <li>Invite friends to earn referral bonuses</li>
+                                <li>Claim daily rewards for consistent earnings</li>
+                                <li>Withdraw your earnings when conditions are met</li>
+                            </ol>
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            Maximizing Your Earnings
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <ul>
+                                <li>Invite at least 3 friends to unlock withdrawals</li>
+                                <li>Check the app daily for new tasks and rewards</li>
+                                <li>Claim your daily reward of 0.05 USD every day</li>
+                                <li>Complete all available tasks for maximum earnings</li>
+                                <li>Share your referral link on social media</li>
+                                <li>Plan your withdrawals between 3rd-11th of each month</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            Withdrawal Process
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <ol>
+                                <li>Ensure you have at least 3 referred friends</li>
+                                <li>Complete all available tasks</li>
+                                <li>Have a minimum balance of 5 USD</li>
+                                <li>Wait for the withdrawal period (3rd-11th of the month)</li>
+                                <li>Go to the withdraw section and enter your Binance ID</li>
+                                <li>Submit your withdrawal request</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Terms Section -->
+                <div id="terms-section" class="hidden">
+                    <h3 class="home-section-title" style="margin-top: 30px;"><i class="fas fa-file-alt"></i> Terms & Conditions</h3>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            User Agreement
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            By using this app, you agree to our terms of service. You must be at least 18 years old to use this app. We reserve the right to modify these terms at any time.
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            Payment Terms
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            All payments are processed within 7 business days during the withdrawal period (3rd-11th of each month). Minimum withdrawal amount is 5 USD. We only support Binance for withdrawals. We are not responsible for incorrect payment details provided by users.
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            Privacy Policy
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            We collect minimal user data necessary for app functionality. Your data is never shared with third parties without your consent. You can delete your account and all associated data at any time.
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            Withdrawal Schedule
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            Withdrawals are only processed from the 3rd to the 11th of each month. Any withdrawal requests submitted outside of this period will be queued for the next available withdrawal period. This policy helps us manage payments efficiently.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Friends Section -->
+        <section id="friends" class="section">
+            <div class="content">
+                <h2 class="section-title"><i class="fas fa-user-friends"></i> Friends</h2>
+                <p>Connect with friends and see their progress</p>
+                
+                <div class="referral-stats">
+                    <div class="referral-stat">
+                        <div class="referral-value" id="referrals-count-friends">0</div>
+                        <div class="referral-label">Referrals</div>
+                    </div>
+                    <div class="referral-stat">
+                        <div class="referral-value" id="referral-earnings-friends">0</div>
+                        <div class="referral-label">Earnings</div>
+                    </div>
+                    <div class="referral-stat">
+                        <div class="referral-value" id="referral-bonus-friends">0.1</div>
+                        <div class="referral-label">Bonus/Referral</div>
+                    </div>
+                </div>
+                
+                <div class="invite-link-container">
+                    <h3>Your Invite Link</h3>
+                    <p>Share this link with friends and earn <span id="referral-bonus-friends-amount">0.1</span> <span id="referral-currency-friends">USD</span> when they join and complete tasks!</p>
+                    
+                    <div class="invite-link" id="invite-link-friends">
+                        Loading...
+                    </div>
+                    
+                    <div>
+                        <button class="copy-btn" id="copy-link-btn-friends">
+                            <i class="fas fa-copy"></i> Copy Link
+                        </button>
+                        <button class="share-btn" id="share-link-btn-friends">
+                            <i class="fas fa-share-alt"></i> Share
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="friends-container">
+                    <!-- Friends will be added dynamically -->
+                </div>
+                
+                <div id="no-friends-message" class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-user-friends"></i>
+                    </div>
+                    <div class="empty-text">No friends yet</div>
+                    <div class="empty-subtext">Invite friends to start earning together</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Settings Section -->
+        <section id="settings" class="section">
+            <div class="content">
+                <h2 class="section-title"><i class="fas fa-cog"></i> Settings</h2>
+                
+                <div class="setting-option">
+                    <div>
+                        <div class="setting-label">Notifications</div>
+                        <div class="setting-description">Receive notifications about new tasks and rewards</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="notifications-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-option">
+                    <div>
+                        <div class="setting-label">Sound Effects</div>
+                        <div class="setting-description">Play sounds when completing tasks</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="sound-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-option">
+                    <div>
+                        <div class="setting-label">Privacy Mode</div>
+                        <div class="setting-description">Hide your profile from other users</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="privacy-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <div style="margin-top: 30px; text-align: center;">
+                    <button class="delete-btn" id="deleteAccountBtn">
+                        <i class="fas fa-trash"></i> Delete Account
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <a href="#" class="nav-item active" data-section="home">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="#" class="nav-item" data-section="earn">
+            <i class="fas fa-coins"></i>
+            <span>Earn</span>
+        </a>
+        <a href="#" class="nav-item" data-section="withdraw">
+            <i class="fas fa-wallet"></i>
+            <span>Withdraw</span>
+        </a>
+        <a href="#" class="nav-item" data-section="friends">
+            <i class="fas fa-user-friends"></i>
+            <span>Friends</span>
+        </a>
+        <a href="#" class="nav-item" data-section="help">
+            <i class="fas fa-question-circle"></i>
+            <span>Help</span>
+        </a>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBrFwRseJaA7oszguU3OTDwt_tFmy81I0o",
+            authDomain: "start-earn-money-1197c.firebaseapp.com",
+            databaseURL: "https://start-earn-money-1197c-default-rtdb.firebaseio.com",
+            projectId: "start-earn-money-1197c",
+            storageBucket: "start-earn-money-1197c.firebasestorage.app",
+            messagingSenderId: "1010656827459",
+            appId: "1:1010656827459:web:12b13ee073f8c097815cf6",
+            measurementId: "G-S72CS2SV5F"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const analytics = firebase.analytics();
+
+        // App state
+        const appState = {
+            points: 0,
+            friends: 0,
+            referrals: 0,
+            referralEarnings: 0,
+            userId: '',
+            username: '',
+            completedTasksList: [],
+            country: 'others',
+            currency: 'USD',
+            currencySymbol: '$',
+            language: 'english',
+            settings: {
+                notifications: true,
+                sound: true,
+                privacy: false
+            },
+            withdrawalHistory: [],
+            dailyTasksCompleted: []
+        };
+
+        // Country configurations - Only USD with Binance
+        const countryConfig = {
+            others: { 
+                currency: 'USD', 
+                symbol: '$', 
+                name: 'Other Countries', 
+                referralBonus: 0.1,
+                dailyReward: 0.05,
+                minWithdrawal: 5,
+                withdrawMethods: ['binance']
+            }
+        };
+
+        // Available tasks
+        const availableTasks = [
+            {
+                id: 'invite_3_friends',
+                name: 'Invite 3 Friends',
+                points: 0.1,
+                requiredCount: 3,
+                currentCount: 0,
+                icon: 'share',
+                iconContent: '<i class="fas fa-share-alt"></i>'
+            },
+            {
+                id: 'ad_1',
+                name: 'Ad 1',
+                points: 0.03,
+                requiredCount: 1,
+                currentCount: 0,
+                icon: 'ad',
+                iconContent: '<i class="fas fa-ad"></i>',
+                link: 'https://otieu.com/4/10130243'
+            },
+            {
+                id: 'ad_2',
+                name: 'Ad 2',
+                points: 0.03,
+                requiredCount: 1,
+                currentCount: 0,
+                icon: 'ad',
+                iconContent: '<i class="fas fa-ad"></i>',
+                link: 'https://otieu.com/4/10130243'
+            },
+            {
+                id: 'ad_3',
+                name: 'Ad 3',
+                points: 0.03,
+                requiredCount: 1,
+                currentCount: 0,
+                icon: 'ad',
+                iconContent: '<i class="fas fa-ad"></i>',
+                link: 'https://otieu.com/4/10130243'
+            },
+            {
+                id: 'ad_4',
+                name: 'Ad 4',
+                points: 0.03,
+                requiredCount: 1,
+                currentCount: 0,
+                icon: 'ad',
+                iconContent: '<i class="fas fa-ad"></i>',
+                link: 'https://otieu.com/4/10130243'
+            },
+            {
+                id: 'ad_5',
+                name: 'Ad 5',
+                points: 0.03,
+                requiredCount: 1,
+                currentCount: 0,
+                icon: 'ad',
+                iconContent: '<i class="fas fa-ad"></i>',
+                link: 'https://otieu.com/4/10130243'
+            },
+            {
+                id: 'ad_6',
+                name: 'Ad 6',
+                points: 0.03,
+                requiredCount: 1,
+                currentCount: 0,
+                icon: 'ad',
+                iconContent: '<i class="fas fa-ad"></i>',
+                link: 'https://www.effectivegatecpm.com/qf4spg1ng?key=b0c4e78eb326169203e6f4ebdb9cdecf'
+            },
+            {
+                id: 'ad_7',
+                name: 'Ad 7',
+                points: 0.03,
+                requiredCount: 1,
+                currentCount: 0,
+                icon: 'ad',
+                iconContent: '<i class="fas fa-ad"></i>',
+                link: 'https://www.effectivegatecpm.com/qf4spg1ng?key=b0c4e78eb326169203e6f4ebdb9cdecf'
+            },
+            {
+                id: 'ad_8',
+                name: 'Ad 8',
+                points: 0.03,
+                requiredCount: 1,
+                currentCount: 0,
+                icon: 'ad',
+                iconContent: '<i class="fas fa-ad"></i>',
+                link: 'https://www.effectivegatecpm.com/qf4spg1ng?key=b0c4e78eb326169203e6f4ebdb9cdecf'
+            },
+            {
+                id: 'ad_9',
+                name: 'Ad 9',
+                points: 0.03,
+                requiredCount: 1,
+                currentCount: 0,
+                icon: 'ad',
+                iconContent: '<i class="fas fa-ad"></i>',
+                link: 'https://www.effectivegatecpm.com/qf4spg1ng?key=b0c4e78eb326169203e6f4ebdb9cdecf'
+            },
+            {
+                id: 'ad_10',
+                name: 'Ad 10',
+                points: 0.03,
+                requiredCount: 1,
+                currentCount: 0,
+                icon: 'ad',
+                iconContent: '<i class="fas fa-ad"></i>',
+                link: 'https://www.effectivegatecpm.com/qf4spg1ng?key=b0c4e78eb326169203e6f4ebdb9cdecf'
+            },
+            {
+                id: 'ad_11',
+                name: 'Ad 11',
+                points: 0.03,
+                requiredCount: 1,
+                currentCount: 0,
+                icon: 'ad',
+                iconContent: '<i class="fas fa-ad"></i>',
+                link: 'https://www.effectivegatecpm.com/qf4spg1ng?key=b0c4e78eb326169203e6f4ebdb9cdecf'
+            },
+            {
+                id: 'ad_12',
+                name: 'Ad 12',
+                points: 0.03,
+                requiredCount: 1,
+                currentCount: 0,
+                icon: 'ad',
+                iconContent: '<i class="fas fa-ad"></i>',
+                link: 'https://www.effectivegatecpm.com/qf4spg1ng?key=b0c4e78eb326169203e6f4ebdb9cdecf'
+            }
+        ];
+
+        // Variables for ad task handling
+        let currentAdTask = null;
+        let adTimerInterval = null;
+        let adTimerCount = 3;
+
+        // Loading system
+        let loadingProgress = 0;
+        const loadingSteps = [
+            { name: 'Initializing app', progress: 10 },
+            { name: 'Loading user data', progress: 50 },
+            { name: 'Setting up UI', progress: 75 },
+            { name: 'Finalizing', progress: 90 },
+            { name: 'Ready', progress: 100 }
+        ];
+
+        function updateLoadingProgress(stepIndex) {
+            if (stepIndex >= loadingSteps.length) return;
+            
+            const step = loadingSteps[stepIndex];
+            loadingProgress = step.progress;
+            
+            document.getElementById('loadingProgressBar').style.width = `${loadingProgress}%`;
+            document.getElementById('loadingPercentage').textContent = `${loadingProgress}%`;
+            
+            setTimeout(() => {
+                updateLoadingProgress(stepIndex + 1);
+            }, 500);
+        }
+
+        function finishLoading() {
+            setTimeout(() => {
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('appContainer').classList.add('loaded');
+            }, 500);
+        }
+
+        // Initialize the app
+        async function initApp() {
+            try {
+                updateLoadingProgress(0);
+                
+                await loadAllData();
+                
+                // Auto-set country to others with USD
+                appState.country = 'others';
+                updateCurrency();
+                
+                await updateUI();
+                
+                // Start daily reward timer
+                updateDailyRewardTimer();
+                
+                // Auto-select Binance as payment method
+                document.querySelector('.withdraw-method').classList.add('active');
+                document.getElementById('paymentInputContainer').classList.remove('hidden');
+                
+                finishLoading();
+                
+                showNotification('App loaded successfully!');
+            } catch (error) {
+                console.error('Error initializing app:', error);
+                showNotification('Error loading app data');
+                finishLoading();
+            }
+        }
+
+        // Load all data from localStorage and Firebase
+        async function loadAllData() {
+            // Generate or get user ID
+            appState.userId = localStorage.getItem('userId') || generateUserId();
+            localStorage.setItem('userId', appState.userId);
+            
+            // Generate username
+            appState.username = localStorage.getItem('username') || generateUsername();
+            localStorage.setItem('username', appState.username);
+            
+            // Try to load user data from Firebase first
+            try {
+                const userRef = database.ref('users/' + appState.userId);
+                const snapshot = await userRef.once('value');
+                
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    appState.points = userData.points || 0;
+                    appState.friends = userData.friends || 0;
+                    appState.referrals = userData.referrals || 0;
+                    appState.referralEarnings = userData.referralEarnings || 0;
+                    appState.completedTasksList = userData.completedTasksList || [];
+                    appState.country = userData.country || 'others';
+                    appState.language = userData.language || 'english';
+                    appState.settings = userData.settings || appState.settings;
+                    appState.withdrawalHistory = userData.withdrawalHistory || [];
+                    appState.dailyTasksCompleted = userData.dailyTasksCompleted || [];
+                    
+                    updateCurrency();
+                    
+                    // Log analytics event
+                    analytics.logEvent('user_data_loaded_from_firebase');
+                } else {
+                    // If no data in Firebase, check localStorage
+                    const localData = localStorage.getItem('userData');
+                    if (localData) {
+                        const parsedData = JSON.parse(localData);
+                        appState.points = parsedData.points || 0;
+                        appState.friends = parsedData.friends || 0;
+                        appState.referrals = parsedData.referrals || 0;
+                        appState.referralEarnings = parsedData.referralEarnings || 0;
+                        appState.completedTasksList = parsedData.completedTasksList || [];
+                        appState.country = parsedData.country || 'others';
+                        appState.language = parsedData.language || 'english';
+                        appState.settings = parsedData.settings || appState.settings;
+                        appState.withdrawalHistory = parsedData.withdrawalHistory || [];
+                        appState.dailyTasksCompleted = parsedData.dailyTasksCompleted || [];
+                        
+                        updateCurrency();
+                        
+                        // Save to Firebase for future use
+                        await saveAllData();
+                    } else {
+                        // First time user
+                        await saveAllData();
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading from Firebase:', error);
+                
+                // Fallback to localStorage
+                const localData = localStorage.getItem('userData');
+                if (localData) {
+                    const parsedData = JSON.parse(localData);
+                    appState.points = parsedData.points || 0;
+                    appState.friends = parsedData.friends || 0;
+                    appState.referrals = parsedData.referrals || 0;
+                    appState.referralEarnings = parsedData.referralEarnings || 0;
+                    appState.completedTasksList = parsedData.completedTasksList || [];
+                    appState.country = parsedData.country || 'others';
+                    appState.language = parsedData.language || 'english';
+                    appState.settings = parsedData.settings || appState.settings;
+                    appState.withdrawalHistory = parsedData.withdrawalHistory || [];
+                    appState.dailyTasksCompleted = parsedData.dailyTasksCompleted || [];
+                    
+                    updateCurrency();
+                } else {
+                    await saveAllData();
+                }
+            }
+            
+            // Reset daily tasks if it's a new day
+            resetDailyTasksIfNeeded();
+        }
+
+        // Save all data to localStorage and Firebase
+        async function saveAllData() {
+            const userData = {
+                username: appState.username,
+                points: appState.points,
+                friends: appState.friends,
+                referrals: appState.referrals,
+                referralEarnings: appState.referralEarnings,
+                completedTasksList: appState.completedTasksList,
+                country: appState.country,
+                language: appState.language,
+                settings: appState.settings,
+                withdrawalHistory: appState.withdrawalHistory,
+                dailyTasksCompleted: appState.dailyTasksCompleted,
+                lastUpdated: new Date().toISOString()
+            };
+            
+            // Save to localStorage
+            localStorage.setItem('userData', JSON.stringify(userData));
+            
+            // Save to Firebase
+            try {
+                await database.ref('users/' + appState.userId).set(userData);
+                analytics.logEvent('user_data_saved_to_firebase');
+            } catch (error) {
+                console.error('Error saving to Firebase:', error);
+                // Continue with app even if Firebase save fails
+            }
+        }
+
+        // Update currency based on selected country
+        function updateCurrency() {
+            const config = countryConfig[appState.country];
+            appState.currency = config.currency;
+            appState.currencySymbol = config.symbol;
+            
+            document.getElementById('currency-label').textContent = appState.currency;
+            document.getElementById('referral-bonus-friends').textContent = config.referralBonus;
+            document.getElementById('referral-bonus-friends-amount').textContent = config.referralBonus;
+            document.getElementById('referral-currency-friends').textContent = appState.currency;
+            document.getElementById('withdrawCurrency').textContent = appState.currency;
+            
+            document.getElementById('minWithdrawAmount').textContent = config.minWithdrawal;
+            
+            loadTasks();
+        }
+
+        // Daily reward functionality
+        function updateDailyRewardTimer() {
+            const lastReward = localStorage.getItem('lastRewardDate');
+            const now = new Date();
+            const timerElement = document.getElementById('dailyRewardTimer');
+            const buttonElement = document.getElementById('dailyRewardBtn');
+            
+            if (!lastReward) {
+                timerElement.textContent = 'Available now!';
+                timerElement.className = 'daily-reward-timer reward-available';
+                buttonElement.disabled = false;
+                return;
+            }
+            
+            const lastRewardDate = new Date(lastReward);
+            const timeDiff = now.getTime() - lastRewardDate.getTime();
+            const hoursDiff = timeDiff / (1000 * 60 * 60);
+            
+            if (hoursDiff >= 24) {
+                timerElement.textContent = 'Available now!';
+                timerElement.className = 'daily-reward-timer reward-available';
+                buttonElement.disabled = false;
+            } else {
+                const remainingHours = 24 - hoursDiff;
+                const hours = Math.floor(remainingHours);
+                const minutes = Math.floor((remainingHours - hours) * 60);
+                
+                timerElement.textContent = `Available in ${hours}h ${minutes}m`;
+                timerElement.className = 'daily-reward-timer reward-cooldown';
+                buttonElement.disabled = true;
+                
+                setTimeout(updateDailyRewardTimer, 60000);
+            }
+        }
+
+        function claimDailyReward() {
+            const lastReward = localStorage.getItem('lastRewardDate');
+            const now = new Date();
+            
+            if (lastReward) {
+                const lastRewardDate = new Date(lastReward);
+                const timeDiff = now.getTime() - lastRewardDate.getTime();
+                const hoursDiff = timeDiff / (1000 * 60 * 60);
+                
+                if (hoursDiff < 24) {
+                    showNotification('You already claimed your daily reward today!');
+                    return;
+                }
+            }
+            
+            const config = countryConfig[appState.country];
+            const dailyReward = config.dailyReward;
+            
+            appState.points += dailyReward;
+            localStorage.setItem('lastRewardDate', now.toISOString());
+            
+            updateUI();
+            saveAllData();
+            updateDailyRewardTimer();
+            
+            // Log analytics event
+            analytics.logEvent('daily_reward_claimed', {
+                value: dailyReward,
+                currency: appState.currency
+            });
+            
+            showNotification(`Daily reward claimed! +${appState.currencySymbol}${dailyReward}`);
+        }
+
+        // Check if withdrawal is currently available
+        function isWithdrawalAvailable() {
+            const now = new Date();
+            const currentDay = now.getDate();
+            return currentDay >= 3 && currentDay <= 11;
+        }
+
+        // Generate a unique user ID for referral links
+        function generateUserId() {
+            return 'user_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+        }
+
+        // Generate a Telegram username for the current user
+        function generateUsername() {
+            const adjectives = ['cool', 'happy', 'smart', 'quick', 'bright', 'fast', 'clever'];
+            const nouns = ['panda', 'tiger', 'eagle', 'wolf', 'fox', 'bear', 'lion'];
+            const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+            const noun = nouns[Math.floor(Math.random() * nouns.length)];
+            const num = Math.floor(Math.random() * 1000);
+            return `@${adj}_${noun}${num}`;
+        }
+
+        // Update all UI elements
+        async function updateUI() {
+            await updateStatsDisplay();
+            await updateFriendsDisplay();
+            await updateReferralStats();
+            await updateInviteLink();
+            await updateSettingsToggles();
+            await loadTasks();
+            await updateWithdrawSection();
+        }
+
+        // Navigation functionality
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                document.querySelectorAll('.nav-item').forEach(nav => {
+                    nav.classList.remove('active');
+                });
+                document.querySelectorAll('.section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                
+                this.classList.add('active');
+                
+                const sectionId = this.getAttribute('data-section');
+                document.getElementById(sectionId).classList.add('active');
+                
+                // Log analytics event
+                analytics.logEvent('navigation', {
+                    section: sectionId
+                });
+            });
+        });
+
+        // Settings button
+        document.getElementById('settingsBtn').addEventListener('click', function() {
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+            document.getElementById('settings').classList.add('active');
+            
+            // Log analytics event
+            analytics.logEvent('settings_opened');
+        });
+
+        // Daily reward button
+        document.getElementById('dailyRewardBtn').addEventListener('click', function() {
+            claimDailyReward();
+        });
+
+        // Settings toggles
+        document.getElementById('notifications-toggle').addEventListener('change', function() {
+            appState.settings.notifications = this.checked;
+            saveAllData();
+            showNotification(this.checked ? 'Notifications enabled' : 'Notifications disabled');
+            
+            // Log analytics event
+            analytics.logEvent('settings_changed', {
+                setting: 'notifications',
+                value: this.checked
+            });
+        });
+
+        document.getElementById('sound-toggle').addEventListener('change', function() {
+            appState.settings.sound = this.checked;
+            saveAllData();
+            showNotification(this.checked ? 'Sound effects enabled' : 'Sound effects disabled');
+            
+            // Log analytics event
+            analytics.logEvent('settings_changed', {
+                setting: 'sound',
+                value: this.checked
+            });
+        });
+
+        document.getElementById('privacy-toggle').addEventListener('change', function() {
+            appState.settings.privacy = this.checked;
+            saveAllData();
+            showNotification(this.checked ? 'Privacy mode enabled' : 'Privacy mode disabled');
+            
+            // Log analytics event
+            analytics.logEvent('settings_changed', {
+                setting: 'privacy',
+                value: this.checked
+            });
+        });
+
+        // Card actions
+        document.querySelectorAll('.card[data-action]').forEach(card => {
+            card.addEventListener('click', function() {
+                const action = this.getAttribute('data-action');
+                
+                // Log analytics event
+                analytics.logEvent('quick_action_clicked', {
+                    action: action
+                });
+                
+                switch(action) {
+                    case 'invite-friends':
+                        document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                        document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+                        document.querySelector('.nav-item[data-section="friends"]').classList.add('active');
+                        document.getElementById('friends').classList.add('active');
+                        break;
+                    case 'tasks':
+                        document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                        document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+                        document.querySelector('.nav-item[data-section="earn"]').classList.add('active');
+                        document.getElementById('earn').classList.add('active');
+                        break;
+                    case 'help':
+                        document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                        document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+                        document.querySelector('.nav-item[data-section="help"]').classList.add('active');
+                        document.getElementById('help').classList.add('active');
+                        break;
+                }
+            });
+        });
+
+        // Help card actions
+        document.querySelectorAll('.help-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const helpType = this.getAttribute('data-help');
+                
+                document.getElementById('faq-section').classList.add('hidden');
+                document.getElementById('contact-section').classList.add('hidden');
+                document.getElementById('tutorial-section').classList.add('hidden');
+                document.getElementById('terms-section').classList.add('hidden');
+                
+                document.getElementById(`${helpType}-section`).classList.remove('hidden');
+                
+                // Log analytics event
+                analytics.logEvent('help_section_opened', {
+                    section: helpType
+                });
+            });
+        });
+
+        // FAQ toggle functionality
+        document.querySelectorAll('.faq-question').forEach(question => {
+            question.addEventListener('click', function() {
+                const faqItem = this.parentElement;
+                faqItem.classList.toggle('active');
+            });
+        });
+
+        // Copy invite link buttons
+        document.getElementById('copy-link-btn-friends').addEventListener('click', copyInviteLink);
+
+        function copyInviteLink() {
+            const inviteLink = document.getElementById('invite-link-friends').textContent;
+            navigator.clipboard.writeText(inviteLink).then(() => {
+                showNotification('Invite link copied to clipboard!');
+                
+                // Log analytics event
+                analytics.logEvent('invite_link_copied');
+            }).catch(() => {
+                const textArea = document.createElement('textarea');
+                textArea.value = inviteLink;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showNotification('Invite link copied to clipboard!');
+                
+                // Log analytics event
+                analytics.logEvent('invite_link_copied_fallback');
+            });
+        }
+
+        // Share invite link buttons
+        document.getElementById('share-link-btn-friends').addEventListener('click', shareInviteLink);
+
+        function shareInviteLink() {
+            const inviteLink = document.getElementById('invite-link-friends').textContent;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Join me on Telegram Mini App!',
+                    text: 'Earn rewards by completing simple tasks. Use my invite link to get started!',
+                    url: inviteLink
+                }).then(() => {
+                    showNotification('Invite link shared successfully!');
+                    
+                    // Log analytics event
+                    analytics.logEvent('invite_link_shared');
+                }).catch(() => {
+                    showNotification('Invite link copied to clipboard!');
+                    
+                    // Log analytics event
+                    analytics.logEvent('invite_link_share_failed');
+                });
+            } else {
+                navigator.clipboard.writeText(inviteLink).then(() => {
+                    showNotification('Invite link copied to clipboard!');
+                    
+                    // Log analytics event
+                    analytics.logEvent('invite_link_copied_share');
+                });
+            }
+        }
+
+        // Withdraw button
+        document.getElementById('withdrawBtn').addEventListener('click', function() {
+            if (!isWithdrawalAvailable()) {
+                showNotification('Withdrawals are only available from 3rd to 11th of each month');
+                return;
+            }
+            
+            document.getElementById('withdrawModal').classList.add('active');
+            updateWithdrawConditions();
+            
+            // Log analytics event
+            analytics.logEvent('withdraw_modal_opened');
+        });
+
+        // Withdraw button in withdraw section
+        document.getElementById('withdrawBtn2').addEventListener('click', function() {
+            if (!isWithdrawalAvailable()) {
+                showNotification('Withdrawals are only available from 3rd to 11th of each month');
+                return;
+            }
+            
+            document.getElementById('withdrawModal').classList.add('active');
+            updateWithdrawConditions();
+            
+            // Log analytics event
+            analytics.logEvent('withdraw_modal_opened_from_section');
+        });
+
+        // Cancel withdraw
+        document.getElementById('cancelWithdraw').addEventListener('click', function() {
+            document.getElementById('withdrawModal').classList.remove('active');
+        });
+
+        // Submit withdraw
+        document.getElementById('submitWithdraw').addEventListener('click', function() {
+            withdrawFunds();
+        });
+
+        // Amount options
+        document.querySelectorAll('.amount-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.amount-option').forEach(opt => {
+                    opt.classList.remove('active');
+                });
+                this.classList.add('active');
+                document.getElementById('withdrawAmount').value = this.getAttribute('data-amount');
+                updateWithdrawConditions();
+            });
+        });
+
+        // Payment input validation
+        document.getElementById('paymentInput').addEventListener('input', function() {
+            updateWithdrawConditions();
+        });
+
+        // Withdraw amount validation
+        document.getElementById('withdrawAmount').addEventListener('input', function() {
+            updateWithdrawConditions();
+        });
+
+        // Update withdraw conditions
+        function updateWithdrawConditions() {
+            const minFriendsCheck = document.getElementById('minFriendsCheck');
+            const tasksCompletedCheck = document.getElementById('tasksCompletedCheck');
+            const minAmountCheck = document.getElementById('minAmountCheck');
+            const withdrawScheduleCheck = document.getElementById('withdrawScheduleCheck');
+            const submitWithdrawBtn = document.getElementById('submitWithdraw');
+            
+            const config = countryConfig[appState.country];
+            const minWithdrawal = config ? config.minWithdrawal : 5;
+            
+            const hasMinFriends = appState.referrals >= 3;
+            const hasCompletedTasks = appState.completedTasksList.includes('invite_3_friends');
+            const withdrawAmount = parseInt(document.getElementById('withdrawAmount').value) || 0;
+            const hasMinAmount = withdrawAmount >= minWithdrawal;
+            const hasPaymentDetails = document.getElementById('paymentInput').value.trim() !== '';
+            const isWithdrawalPeriod = isWithdrawalAvailable();
+            
+            minFriendsCheck.textContent = hasMinFriends ? '✓' : '!';
+            minFriendsCheck.className = hasMinFriends ? 'condition-check fulfilled' : 'condition-check';
+            
+            tasksCompletedCheck.textContent = hasCompletedTasks ? '✓' : '!';
+            tasksCompletedCheck.className = hasCompletedTasks ? 'condition-check fulfilled' : 'condition-check';
+            
+            minAmountCheck.textContent = hasMinAmount ? '✓' : '!';
+            minAmountCheck.className = hasMinAmount ? 'condition-check fulfilled' : 'condition-check';
+            
+            withdrawScheduleCheck.textContent = isWithdrawalPeriod ? '✓' : '!';
+            withdrawScheduleCheck.className = isWithdrawalPeriod ? 'condition-check fulfilled' : 'condition-check';
+            
+            document.getElementById('minWithdrawAmount').textContent = minWithdrawal;
+            document.getElementById('withdrawCurrency').textContent = appState.currency;
+            
+            const allConditionsMet = hasMinFriends && hasCompletedTasks && hasMinAmount && hasPaymentDetails && isWithdrawalPeriod;
+            submitWithdrawBtn.disabled = !allConditionsMet;
+        }
+
+        // Delete account button
+        document.getElementById('deleteAccountBtn').addEventListener('click', function() {
+            document.getElementById('deleteModal').classList.add('active');
+            
+            // Log analytics event
+            analytics.logEvent('delete_account_modal_opened');
+        });
+
+        // Cancel delete
+        document.getElementById('cancelDelete').addEventListener('click', function() {
+            document.getElementById('deleteModal').classList.remove('active');
+        });
+
+        // Confirm delete
+        document.getElementById('confirmDelete').addEventListener('click', function() {
+            deleteAccount();
+            document.getElementById('deleteModal').classList.remove('active');
+        });
+
+        // Ad task modal buttons
+        document.getElementById('openAdLinkBtn').addEventListener('click', function() {
+            if (currentAdTask && currentAdTask.link) {
+                window.open(currentAdTask.link, '_blank');
+                startAdTimer();
+            }
+        });
+
+        document.getElementById('completeAdTaskBtn').addEventListener('click', function() {
+            completeAdTask();
+        });
+
+        document.getElementById('cancelAdTask').addEventListener('click', function() {
+            document.getElementById('adTaskModal').classList.remove('active');
+            resetAdTimer();
+        });
+
+        // Helper functions
+        async function updateStatsDisplay() {
+            document.getElementById('points-value').innerHTML = `${appState.currencySymbol}${appState.points.toFixed(2)}`;
+            document.getElementById('friends-value').textContent = appState.friends;
+        }
+
+        async function updateReferralStats() {
+            document.getElementById('referrals-count-friends').textContent = appState.referrals;
+            document.getElementById('referral-earnings-friends').innerHTML = `${appState.currencySymbol}${appState.referralEarnings.toFixed(2)}`;
+        }
+
+        async function updateInviteLink() {
+            const inviteLink = `https://t.me/Startearnmoney1bot?start=ref_${appState.userId}`;
+            document.getElementById('invite-link-friends').textContent = inviteLink;
+        }
+
+        async function updateFriendsDisplay() {
+            const friendsContainer = document.getElementById('friends-container');
+            const noFriendsMessage = document.getElementById('no-friends-message');
+            
+            friendsContainer.innerHTML = '';
+            
+            if (appState.referrals === 0) {
+                noFriendsMessage.classList.remove('hidden');
+            } else {
+                noFriendsMessage.classList.add('hidden');
+                
+                for (let i = 0; i < appState.referrals; i++) {
+                    const friendElement = document.createElement('div');
+                    friendElement.className = 'friend-card';
+                    friendElement.innerHTML = `
+                        <div class="friend-avatar">F${i+1}</div>
+                        <div class="friend-name">Friend ${i+1}</div>
+                        <div class="friend-status online">Online</div>
+                    `;
+                    friendsContainer.appendChild(friendElement);
+                }
+            }
+        }
+
+        async function updateSettingsToggles() {
+            document.getElementById('notifications-toggle').checked = appState.settings.notifications;
+            document.getElementById('sound-toggle').checked = appState.settings.sound;
+            document.getElementById('privacy-toggle').checked = appState.settings.privacy;
+        }
+
+        async function updateWithdrawSection() {
+            // Update balance in withdraw section
+            document.getElementById('withdraw-balance').textContent = `${appState.currencySymbol}${appState.points.toFixed(2)}`;
+            
+            // Update withdrawal history
+            const historyContainer = document.getElementById('withdraw-history-container');
+            
+            if (appState.withdrawalHistory.length === 0) {
+                historyContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                        <div class="empty-text">No withdrawal history</div>
+                        <div class="empty-subtext">Your withdrawal history will appear here</div>
+                    </div>
+                `;
+            } else {
+                historyContainer.innerHTML = '';
+                
+                appState.withdrawalHistory.forEach(withdrawal => {
+                    const historyItem = document.createElement('div');
+                    historyItem.className = 'withdraw-history-item';
+                    
+                    const date = new Date(withdrawal.timestamp);
+                    const formattedDate = `${date.getDate()}/${date.getMonth()+1}/${date.getFullYear()}`;
+                    
+                    let statusClass = 'status-pending';
+                    if (withdrawal.status === 'completed') {
+                        statusClass = 'status-completed';
+                    } else if (withdrawal.status === 'failed') {
+                        statusClass = 'status-failed';
+                    }
+                    
+                    historyItem.innerHTML = `
+                        <div class="withdraw-history-header">
+                            <div class="withdraw-history-amount">${appState.currencySymbol}${withdrawal.amount}</div>
+                            <div class="withdraw-history-date">${formattedDate}</div>
+                        </div>
+                        <div>
+                            <span class="withdraw-history-status ${statusClass}">${withdrawal.status}</span>
+                        </div>
+                    `;
+                    
+                    historyContainer.appendChild(historyItem);
+                });
+            }
+        }
+
+        async function loadTasks() {
+            const tasksContainer = document.getElementById('tasks-container');
+            const allTasksCompleted = document.getElementById('all-tasks-completed');
+            
+            availableTasks[0].currentCount = appState.referrals;
+            
+            // Update ad task status
+            availableTasks.forEach(task => {
+                if (task.id.startsWith('ad_')) {
+                    task.currentCount = appState.dailyTasksCompleted.includes(task.id) ? 1 : 0;
+                }
+            });
+            
+            const incompleteTasks = availableTasks.filter(task => 
+                !appState.completedTasksList.includes(task.id) && 
+                task.currentCount < task.requiredCount
+            );
+
+            if (incompleteTasks.length === 0) {
+                tasksContainer.classList.add('hidden');
+                allTasksCompleted.classList.remove('hidden');
+                return;
+            } else {
+                tasksContainer.classList.remove('hidden');
+                allTasksCompleted.classList.add('hidden');
+            }
+
+            tasksContainer.innerHTML = '';
+            
+            incompleteTasks.forEach(task => {
+                const taskElement = document.createElement('div');
+                taskElement.className = `task-item`;
+                taskElement.id = `task-${task.id}`;
+                
+                const progressWidth = Math.min((task.currentCount / task.requiredCount) * 100, 100);
+                const isCompleted = task.currentCount >= task.requiredCount;
+                
+                taskElement.innerHTML = `
+                    <div class="task-icon">
+                        ${task.iconContent}
+                    </div>
+                    <div class="task-info">
+                        <div class="task-name">${task.name}</div>
+                        <div class="task-points">+${appState.currencySymbol}${task.points} ${appState.currency}</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${progressWidth}%"></div>
+                        </div>
+                    </div>
+                    <button class="task-action" id="${task.id}-button" 
+                            style="background: ${isCompleted ? '#4cd964' : '#34aadc'}" 
+                            ${isCompleted ? 'disabled' : ''}>
+                        ${isCompleted ? 'Completed' : (task.currentCount > 0 ? `${task.currentCount}/${task.requiredCount}` : 'Start')}
+                    </button>
+                `;
+                
+                tasksContainer.appendChild(taskElement);
+            });
+
+            incompleteTasks.forEach(task => {
+                const button = document.getElementById(`${task.id}-button`);
+                if (button && !button.disabled) {
+                    button.addEventListener('click', () => {
+                        if (task.id === 'invite_3_friends') {
+                            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                            document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+                            document.querySelector('.nav-item[data-section="friends"]').classList.add('active');
+                            document.getElementById('friends').classList.add('active');
+                            
+                            showNotification('Invite friends to complete this task!');
+                        } else if (task.id.startsWith('ad_')) {
+                            startAdTask(task);
+                        }
+                        
+                        // Log analytics event
+                        analytics.logEvent('task_clicked', {
+                            task_id: task.id,
+                            task_name: task.name
+                        });
+                    });
+                }
+            });
+        }
+
+        // Ad task functionality
+        function startAdTask(task) {
+            currentAdTask = task;
+            document.getElementById('adTaskTitle').textContent = task.name;
+            document.getElementById('adTaskDescription').textContent = `Complete this ad task to earn ${appState.currencySymbol}${task.points}`;
+            document.getElementById('adTimer').textContent = '3';
+            document.getElementById('completeAdTaskBtn').disabled = true;
+            document.getElementById('adTaskModal').classList.add('active');
+            
+            resetAdTimer();
+        }
+
+        function startAdTimer() {
+            adTimerCount = 3;
+            document.getElementById('adTimer').textContent = adTimerCount;
+            document.getElementById('completeAdTaskBtn').disabled = true;
+            
+            adTimerInterval = setInterval(() => {
+                adTimerCount--;
+                document.getElementById('adTimer').textContent = adTimerCount;
+                
+                if (adTimerCount <= 0) {
+                    clearInterval(adTimerInterval);
+                    document.getElementById('completeAdTaskBtn').disabled = false;
+                    showNotification('You can now complete the task!');
+                }
+            }, 1000);
+        }
+
+        function resetAdTimer() {
+            if (adTimerInterval) {
+                clearInterval(adTimerInterval);
+            }
+            adTimerCount = 3;
+            document.getElementById('adTimer').textContent = adTimerCount;
+            document.getElementById('completeAdTaskBtn').disabled = true;
+        }
+
+        function completeAdTask() {
+            if (!currentAdTask) return;
+            
+            // Add task to completed list
+            if (!appState.dailyTasksCompleted.includes(currentAdTask.id)) {
+                appState.dailyTasksCompleted.push(currentAdTask.id);
+            }
+            
+            // Add points
+            appState.points += currentAdTask.points;
+            
+            // Update UI
+            updateUI();
+            saveAllData();
+            
+            // Close modal
+            document.getElementById('adTaskModal').classList.remove('active');
+            
+            // Show notification
+            showNotification(`Task completed! +${appState.currencySymbol}${currentAdTask.points}`);
+            
+            // Log analytics event
+            analytics.logEvent('ad_task_completed', {
+                task_id: currentAdTask.id,
+                task_name: currentAdTask.name,
+                points: currentAdTask.points
+            });
+            
+            currentAdTask = null;
+        }
+
+        // Reset daily tasks if it's a new day
+        function resetDailyTasksIfNeeded() {
+            const today = new Date().toDateString();
+            const lastReset = localStorage.getItem('lastDailyTaskReset');
+            
+            if (lastReset !== today) {
+                // Reset daily tasks
+                appState.dailyTasksCompleted = [];
+                localStorage.setItem('lastDailyTaskReset', today);
+                saveAllData();
+            }
+        }
+
+        async function withdrawFunds() {
+            const amountInput = document.getElementById('withdrawAmount');
+            const amount = parseInt(amountInput.value);
+            const paymentDetails = document.getElementById('paymentInput').value.trim();
+            
+            if (!amount || amount <= 0) {
+                showNotification('Please enter a valid amount');
+                return;
+            }
+            
+            if (amount > appState.points) {
+                showNotification('Insufficient balance for withdrawal');
+                return;
+            }
+            
+            appState.points -= amount;
+            
+            // Add to withdrawal history
+            const withdrawalRecord = {
+                amount: amount,
+                currency: appState.currency,
+                paymentMethod: 'binance',
+                paymentDetails: paymentDetails,
+                status: 'pending',
+                timestamp: new Date().toISOString()
+            };
+            
+            appState.withdrawalHistory.unshift(withdrawalRecord);
+            
+            await updateUI();
+            await saveAllData();
+            
+            document.getElementById('withdrawModal').classList.remove('active');
+            showNotification(`Withdrawal request for ${appState.currencySymbol}${amount} to Binance submitted!`);
+            
+            // Log analytics event
+            analytics.logEvent('withdrawal_requested', {
+                amount: amount,
+                currency: appState.currency,
+                payment_method: 'binance'
+            });
+            
+            // Save withdrawal request to Firebase
+            try {
+                const withdrawalRef = database.ref('withdrawals').push();
+                await withdrawalRef.set({
+                    userId: appState.userId,
+                    username: appState.username,
+                    amount: amount,
+                    currency: appState.currency,
+                    paymentMethod: 'binance',
+                    paymentDetails: paymentDetails,
+                    status: 'pending',
+                    timestamp: new Date().toISOString()
+                });
+            } catch (error) {
+                console.error('Error saving withdrawal to Firebase:', error);
+            }
+            
+            amountInput.value = '';
+            document.getElementById('paymentInput').value = '';
+            document.querySelectorAll('.amount-option').forEach(opt => {
+                opt.classList.remove('active');
+            });
+        }
+
+        async function deleteAccount() {
+            appState.points = 0;
+            appState.friends = 0;
+            appState.referrals = 0;
+            appState.referralEarnings = 0;
+            appState.completedTasksList = [];
+            appState.country = 'others';
+            appState.language = 'english';
+            appState.settings = {
+                notifications: true,
+                sound: true,
+                privacy: false
+            };
+            appState.withdrawalHistory = [];
+            appState.dailyTasksCompleted = [];
+            
+            localStorage.removeItem('userData');
+            localStorage.removeItem('lastRewardDate');
+            localStorage.removeItem('lastDailyTaskReset');
+            
+            // Remove user data from Firebase
+            try {
+                await database.ref('users/' + appState.userId).remove();
+                analytics.logEvent('account_deleted');
+            } catch (error) {
+                console.error('Error deleting user from Firebase:', error);
+            }
+            
+            await saveAllData();
+            await updateUI();
+            
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+            document.querySelector('.nav-item[data-section="home"]').classList.add('active');
+            document.getElementById('home').classList.add('active');
+            
+            showNotification('Account data reset successfully');
+        }
+
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Initialize the app when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            initApp();
+        });
+    </script>
+</body>
+</html>
