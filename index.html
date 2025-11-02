@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Start Earn Money - Telegram Mini App</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <!-- Import Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
@@ -1231,6 +1233,26 @@
             background: rgba(255, 107, 107, 0.2);
             color: #ff6b6b;
         }
+        
+        /* Telegram Share Button */
+        .telegram-share-btn {
+            background: #34aadc;
+            color: #000;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px 5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .telegram-share-btn:active {
+            transform: scale(0.98);
+        }
     </style>
 </head>
 <body>
@@ -1733,6 +1755,9 @@
                         <button class="copy-btn" id="copy-link-btn-friends">
                             <i class="fas fa-copy"></i> Copy Link
                         </button>
+                        <button class="telegram-share-btn" id="telegram-share-btn">
+                            <i class="fab fa-telegram"></i> Share on Telegram
+                        </button>
                         <button class="share-btn" id="share-link-btn-friends">
                             <i class="fas fa-share-alt"></i> Share
                         </button>
@@ -1841,6 +1866,13 @@
         const app = firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         const analytics = firebase.analytics();
+
+        // Telegram Web App
+        const tg = window.Telegram.WebApp;
+        
+        // Initialize Telegram Web App
+        tg.expand();
+        tg.enableClosingConfirmation();
 
         // App state
         const appState = {
@@ -2154,12 +2186,20 @@
 
         // Load all data from localStorage and Firebase
         async function loadAllData() {
-            // Generate or get user ID
-            appState.userId = localStorage.getItem('userId') || generateUserId();
-            localStorage.setItem('userId', appState.userId);
+            // Get user data from Telegram
+            const tgUser = tg.initDataUnsafe?.user;
             
-            // Generate username
-            appState.username = localStorage.getItem('username') || generateUsername();
+            // Generate or get user ID from Telegram
+            if (tgUser && tgUser.id) {
+                appState.userId = 'tg_' + tgUser.id;
+                appState.username = tgUser.username ? `@${tgUser.username}` : `User${tgUser.id}`;
+            } else {
+                // Fallback to generated ID
+                appState.userId = localStorage.getItem('userId') || generateUserId();
+                appState.username = localStorage.getItem('username') || generateUsername();
+            }
+            
+            localStorage.setItem('userId', appState.userId);
             localStorage.setItem('username', appState.username);
             
             // Try to load user data from Firebase first
@@ -2550,6 +2590,26 @@
             });
         }
 
+        // Telegram Share button
+        document.getElementById('telegram-share-btn').addEventListener('click', shareOnTelegram);
+
+        function shareOnTelegram() {
+            const inviteLink = document.getElementById('invite-link-friends').textContent;
+            const shareText = `Join me on Start Earn Money! Earn money by completing simple tasks. Use my invite link: ${inviteLink}`;
+            
+            // Use Telegram Web App share functionality
+            if (tg && tg.share) {
+                tg.share(shareText);
+            } else {
+                // Fallback to regular share
+                const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(inviteLink)}&text=${encodeURIComponent('Join me on Start Earn Money! Earn money by completing simple tasks.')}`;
+                window.open(shareUrl, '_blank');
+            }
+            
+            // Log analytics event
+            analytics.logEvent('invite_link_shared_telegram');
+        }
+
         // Share invite link buttons
         document.getElementById('share-link-btn-friends').addEventListener('click', shareInviteLink);
 
@@ -2558,8 +2618,8 @@
             
             if (navigator.share) {
                 navigator.share({
-                    title: 'Join me on Telegram Mini App!',
-                    text: 'Earn rewards by completing simple tasks. Use my invite link to get started!',
+                    title: 'Join me on Start Earn Money!',
+                    text: 'Earn money by completing simple tasks. Use my invite link to get started!',
                     url: inviteLink
                 }).then(() => {
                     showNotification('Invite link shared successfully!');
