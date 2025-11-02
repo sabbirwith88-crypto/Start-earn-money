@@ -1189,6 +1189,48 @@
         .ad-complete-btn:active:not(:disabled) {
             transform: scale(0.98);
         }
+        
+        /* Friend Card Styles */
+        .friend-card {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #1a1a1a;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #333;
+        }
+        
+        .friend-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #34aadc, #0088cc);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        
+        .friend-name {
+            font-weight: bold;
+            flex: 1;
+        }
+        
+        .friend-status {
+            font-size: 0.8rem;
+            padding: 5px 10px;
+            border-radius: 20px;
+            background: rgba(76, 217, 100, 0.2);
+            color: #4cd964;
+        }
+        
+        .friend-status.offline {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+        }
     </style>
 </head>
 <body>
@@ -1819,7 +1861,8 @@
                 privacy: false
             },
             withdrawalHistory: [],
-            dailyTasksCompleted: []
+            dailyTasksCompleted: [],
+            referredFriends: []
         };
 
         // Country configurations - Only USD with Binance
@@ -2011,6 +2054,9 @@
                 
                 await loadAllData();
                 
+                // Check for referral parameter in URL
+                checkReferral();
+                
                 // Auto-set country to others with USD
                 appState.country = 'others';
                 updateCurrency();
@@ -2031,6 +2077,78 @@
                 console.error('Error initializing app:', error);
                 showNotification('Error loading app data');
                 finishLoading();
+            }
+        }
+
+        // Check for referral parameter in URL
+        function checkReferral() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const refParam = urlParams.get('start');
+            
+            if (refParam && refParam.startsWith('ref_')) {
+                const referrerId = refParam.substring(4);
+                
+                // Don't count if user is referring themselves
+                if (referrerId !== appState.userId) {
+                    // Check if this referral has already been processed
+                    const processedReferrals = JSON.parse(localStorage.getItem('processedReferrals') || '[]');
+                    
+                    if (!processedReferrals.includes(referrerId)) {
+                        // Add to processed referrals
+                        processedReferrals.push(referrerId);
+                        localStorage.setItem('processedReferrals', JSON.stringify(processedReferrals));
+                        
+                        // Process the referral
+                        processReferral(referrerId);
+                    }
+                }
+            }
+        }
+
+        // Process a referral
+        async function processReferral(referrerId) {
+            try {
+                // Get referrer's data from Firebase
+                const referrerRef = database.ref('users/' + referrerId);
+                const snapshot = await referrerRef.once('value');
+                
+                if (snapshot.exists()) {
+                    const referrerData = snapshot.val();
+                    
+                    // Update referrer's data
+                    const updatedReferrals = (referrerData.referrals || 0) + 1;
+                    const referralBonus = countryConfig.others.referralBonus;
+                    const updatedReferralEarnings = (referrerData.referralEarnings || 0) + referralBonus;
+                    const updatedPoints = (referrerData.points || 0) + referralBonus;
+                    
+                    // Update referrer's referred friends list
+                    const updatedReferredFriends = referrerData.referredFriends || [];
+                    const newFriend = {
+                        id: appState.userId,
+                        username: appState.username,
+                        joinedAt: new Date().toISOString()
+                    };
+                    updatedReferredFriends.push(newFriend);
+                    
+                    // Update referrer's data in Firebase
+                    await referrerRef.update({
+                        referrals: updatedReferrals,
+                        referralEarnings: updatedReferralEarnings,
+                        points: updatedPoints,
+                        referredFriends: updatedReferredFriends
+                    });
+                    
+                    // Show notification to new user
+                    showNotification(`You were referred by ${referrerData.username || 'a friend'}!`);
+                    
+                    // Log analytics event
+                    analytics.logEvent('referral_processed', {
+                        referrer_id: referrerId,
+                        new_user_id: appState.userId
+                    });
+                }
+            } catch (error) {
+                console.error('Error processing referral:', error);
             }
         }
 
@@ -2061,6 +2179,7 @@
                     appState.settings = userData.settings || appState.settings;
                     appState.withdrawalHistory = userData.withdrawalHistory || [];
                     appState.dailyTasksCompleted = userData.dailyTasksCompleted || [];
+                    appState.referredFriends = userData.referredFriends || [];
                     
                     updateCurrency();
                     
@@ -2081,6 +2200,7 @@
                         appState.settings = parsedData.settings || appState.settings;
                         appState.withdrawalHistory = parsedData.withdrawalHistory || [];
                         appState.dailyTasksCompleted = parsedData.dailyTasksCompleted || [];
+                        appState.referredFriends = parsedData.referredFriends || [];
                         
                         updateCurrency();
                         
@@ -2108,6 +2228,7 @@
                     appState.settings = parsedData.settings || appState.settings;
                     appState.withdrawalHistory = parsedData.withdrawalHistory || [];
                     appState.dailyTasksCompleted = parsedData.dailyTasksCompleted || [];
+                    appState.referredFriends = parsedData.referredFriends || [];
                     
                     updateCurrency();
                 } else {
@@ -2133,6 +2254,7 @@
                 settings: appState.settings,
                 withdrawalHistory: appState.withdrawalHistory,
                 dailyTasksCompleted: appState.dailyTasksCompleted,
+                referredFriends: appState.referredFriends,
                 lastUpdated: new Date().toISOString()
             };
             
@@ -2615,21 +2737,26 @@
             
             friendsContainer.innerHTML = '';
             
-            if (appState.referrals === 0) {
+            if (appState.referredFriends.length === 0) {
                 noFriendsMessage.classList.remove('hidden');
             } else {
                 noFriendsMessage.classList.add('hidden');
                 
-                for (let i = 0; i < appState.referrals; i++) {
+                appState.referredFriends.forEach((friend, index) => {
                     const friendElement = document.createElement('div');
                     friendElement.className = 'friend-card';
+                    
+                    // Generate a random status (online/offline)
+                    const isOnline = Math.random() > 0.3;
+                    
                     friendElement.innerHTML = `
-                        <div class="friend-avatar">F${i+1}</div>
-                        <div class="friend-name">Friend ${i+1}</div>
-                        <div class="friend-status online">Online</div>
+                        <div class="friend-avatar">${friend.username.charAt(1).toUpperCase()}</div>
+                        <div class="friend-name">${friend.username}</div>
+                        <div class="friend-status ${isOnline ? '' : 'offline'}">${isOnline ? 'Online' : 'Offline'}</div>
                     `;
+                    
                     friendsContainer.appendChild(friendElement);
-                }
+                });
             }
         }
 
@@ -2934,10 +3061,12 @@
             };
             appState.withdrawalHistory = [];
             appState.dailyTasksCompleted = [];
+            appState.referredFriends = [];
             
             localStorage.removeItem('userData');
             localStorage.removeItem('lastRewardDate');
             localStorage.removeItem('lastDailyTaskReset');
+            localStorage.removeItem('processedReferrals');
             
             // Remove user data from Firebase
             try {
