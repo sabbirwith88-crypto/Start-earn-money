@@ -1874,6 +1874,126 @@
         tg.expand();
         tg.enableClosingConfirmation();
 
+        // Telegram Bot Integration
+        class TelegramBotIntegration {
+            constructor() {
+                this.botToken = '8547535941:AAFsreTD4E8XdcbWVPkTyfwoWYlkUdNA5Jg';
+                this.apiUrl = `https://api.telegram.org/bot${this.botToken}`;
+            }
+
+            // Send message to user via bot
+            async sendMessage(chatId, text, replyMarkup = null) {
+                try {
+                    const payload = {
+                        chat_id: chatId,
+                        text: text,
+                        parse_mode: 'HTML'
+                    };
+
+                    if (replyMarkup) {
+                        payload.reply_markup = replyMarkup;
+                    }
+
+                    const response = await fetch(`${this.apiUrl}/sendMessage`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error sending Telegram message:', error);
+                    return null;
+                }
+            }
+
+            // Send referral notification to referrer
+            async sendReferralNotification(referrerId, newUserId, newUsername) {
+                try {
+                    const message = `🎉 <b>New Referral!</b>\n\n` +
+                                   `User ${newUsername} joined using your referral link!\n` +
+                                   `You earned $0.10 USD!\n\n` +
+                                   `Keep inviting friends to earn more!`;
+
+                    return await this.sendMessage(referrerId, message);
+                } catch (error) {
+                    console.error('Error sending referral notification:', error);
+                    return null;
+                }
+            }
+
+            // Send welcome message to new user
+            async sendWelcomeMessage(userId, username, referrerUsername = null) {
+                try {
+                    let message = `👋 <b>Welcome to Start Earn Money, ${username}!</b>\n\n`;
+
+                    if (referrerUsername) {
+                        message += `You were referred by ${referrerUsername}!\n\n`;
+                    }
+
+                    message += `💰 <b>Start Earning Now:</b>\n` +
+                              `• Complete tasks to earn money\n` +
+                              `• Invite friends for bonuses\n` +
+                              `• Claim daily rewards\n` +
+                              `• Withdraw to Binance\n\n` +
+                              `Click the button below to start earning!`;
+
+                    const replyMarkup = {
+                        inline_keyboard: [[
+                            {
+                                text: "🚀 Start Earning",
+                                url: "https://t.me/Startearnmoney1bot/app"
+                            }
+                        ]]
+                    };
+
+                    return await this.sendMessage(userId, message, replyMarkup);
+                } catch (error) {
+                    console.error('Error sending welcome message:', error);
+                    return null;
+                }
+            }
+
+            // Send task completion notification
+            async sendTaskCompletionNotification(userId, taskName, earnings) {
+                try {
+                    const message = `✅ <b>Task Completed!</b>\n\n` +
+                                   `Task: ${taskName}\n` +
+                                   `Earnings: $${earnings} USD\n\n` +
+                                   `Keep completing tasks to earn more!`;
+
+                    return await this.sendMessage(userId, message);
+                } catch (error) {
+                    console.error('Error sending task completion notification:', error);
+                    return null;
+                }
+            }
+
+            // Send withdrawal request notification to admin
+            async sendWithdrawalNotification(userId, username, amount, paymentDetails) {
+                try {
+                    // This would typically send to an admin chat ID
+                    const adminChatId = 'YOUR_ADMIN_CHAT_ID'; // Replace with actual admin chat ID
+                    
+                    const message = `📤 <b>New Withdrawal Request</b>\n\n` +
+                                   `User: ${username} (ID: ${userId})\n` +
+                                   `Amount: $${amount} USD\n` +
+                                   `Binance ID: ${paymentDetails}\n\n` +
+                                   `Please process this withdrawal.`;
+
+                    return await this.sendMessage(adminChatId, message);
+                } catch (error) {
+                    console.error('Error sending withdrawal notification:', error);
+                    return null;
+                }
+            }
+        }
+
+        // Initialize Telegram Bot
+        const telegramBot = new TelegramBotIntegration();
+
         // App state
         const appState = {
             points: 0,
@@ -2169,6 +2289,24 @@
                         points: updatedPoints,
                         referredFriends: updatedReferredFriends
                     });
+                    
+                    // Send Telegram notification to referrer
+                    if (referrerData.telegramId) {
+                        await telegramBot.sendReferralNotification(
+                            referrerData.telegramId, 
+                            appState.userId, 
+                            appState.username
+                        );
+                    }
+                    
+                    // Send welcome message to new user
+                    if (tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) {
+                        await telegramBot.sendWelcomeMessage(
+                            tg.initDataUnsafe.user.id,
+                            appState.username,
+                            referrerData.username
+                        );
+                    }
                     
                     // Show notification to new user
                     showNotification(`You were referred by ${referrerData.username || 'a friend'}!`);
@@ -3007,6 +3145,15 @@
             // Add points
             appState.points += currentAdTask.points;
             
+            // Send Telegram notification
+            if (tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) {
+                telegramBot.sendTaskCompletionNotification(
+                    tg.initDataUnsafe.user.id,
+                    currentAdTask.name,
+                    currentAdTask.points
+                );
+            }
+            
             // Update UI
             updateUI();
             saveAllData();
@@ -3071,6 +3218,14 @@
             
             await updateUI();
             await saveAllData();
+            
+            // Send withdrawal notification to admin
+            await telegramBot.sendWithdrawalNotification(
+                appState.userId,
+                appState.username,
+                amount,
+                paymentDetails
+            );
             
             document.getElementById('withdrawModal').classList.remove('active');
             showNotification(`Withdrawal request for ${appState.currencySymbol}${amount} to Binance submitted!`);
